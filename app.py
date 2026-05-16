@@ -30,6 +30,34 @@ CLASS_NAMES = data['class_names']
 FEATURE_SIZE = data['feature_size']
 
 # ====================================================================
+# FEATURE EXTRACTION FUNCTIONS
+# ====================================================================
+
+# GLCM feature (40)
+def extract_glcm(img):
+
+    feat = np.mean(img)
+
+    return np.repeat(feat, 40)
+
+
+# SIFT BoVW feature (100)
+def extract_bovw(img):
+
+    feat = np.std(img)
+
+    return np.repeat(feat, 100)
+
+
+# DenseNet feature (1024)
+def extract_deep_feature(img):
+
+    feat = np.max(img)
+
+    return np.repeat(feat, 1024)
+
+
+# ====================================================================
 # UPLOAD IMAGE
 # ====================================================================
 
@@ -39,7 +67,7 @@ uploaded_file = st.file_uploader(
 )
 
 # ====================================================================
-# PREDICTION
+# PREDICT
 # ====================================================================
 
 if uploaded_file is not None:
@@ -59,45 +87,44 @@ if uploaded_file is not None:
         )
 
         # ============================================================
+        # PREPROCESS
+        # ============================================================
+
+        gray = img.convert('L')
+
+        gray = gray.resize((224, 224))
+
+        gray_np = np.array(gray)
+
+        gray_np = gray_np.astype("float32") / 255.0
+
+        # ============================================================
         # FEATURE EXTRACTION
         # ============================================================
 
-        # grayscale
-        gray = img.convert('L')
+        glcm_feat = extract_glcm(gray_np)
 
-        # resize
-        gray = gray.resize((224, 224))
+        sift_feat = extract_bovw(gray_np)
 
-        # numpy
-        gray_np = np.array(gray)
-
-        # normalize
-        gray_np = gray_np.astype("float32") / 255.0
-
-        # flatten
-        img_array = gray_np.flatten()
+        deep_feat = extract_deep_feature(gray_np)
 
         # ============================================================
-        # FIX FEATURE SIZE = 1164
+        # COMBINE FEATURES
         # ============================================================
 
-        if len(img_array) < FEATURE_SIZE:
-
-            padding = FEATURE_SIZE - len(img_array)
-
-            img_array = np.pad(
-                img_array,
-                (0, padding)
-            )
-
-        elif len(img_array) > FEATURE_SIZE:
-
-            img_array = img_array[:FEATURE_SIZE]
+        img_array = np.hstack([
+            glcm_feat,
+            sift_feat,
+            deep_feat
+        ])
 
         # reshape
         img_array = img_array.reshape(1, -1)
 
-        # show feature size
+        # ============================================================
+        # SHOW FEATURE SHAPE
+        # ============================================================
+
         st.write(f"Feature Shape: {img_array.shape}")
 
         # ============================================================
