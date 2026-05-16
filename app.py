@@ -1,3 +1,4 @@
+%%writefile app.py
 
 import streamlit as st
 from PIL import Image
@@ -9,24 +10,22 @@ import os
 # TITLE
 # ====================================================================
 
-st.title("Lung Cancer Prediction")
-st.write("Upload an image for prediction")
+st.title("MNIST Digit Predictor")
 
 # ====================================================================
-# LOAD JOBLIB MODEL
+# LOAD MODEL
 # ====================================================================
 
 model_path = 'final_pipeline_lung_cancer.joblib'
 
 if not os.path.exists(model_path):
-    st.error(f"Model file '{model_path}' not found")
+    st.error("Model file not found")
     st.stop()
 
-# load sklearn pipeline
 model = joblib.load(model_path)
 
 # ====================================================================
-# FILE UPLOADER
+# UPLOAD
 # ====================================================================
 
 uploaded_file = st.file_uploader(
@@ -35,49 +34,59 @@ uploaded_file = st.file_uploader(
 )
 
 # ====================================================================
-# PREDICTION
+# PREDICT
 # ====================================================================
 
 if uploaded_file is not None:
 
     try:
 
-        # Load image
         img = Image.open(uploaded_file)
 
         st.image(
             img,
-            caption='Uploaded Image',
+            caption="Uploaded Image",
             use_container_width=True
         )
 
-        st.write("Classifying...")
-
-        # Convert grayscale
+        # grayscale
         img = img.convert('L')
 
-        # Resize
+        # resize
         img = img.resize((28, 28))
 
-        # Convert to numpy
+        # numpy
         img_array = np.array(img)
 
-        # Normalize
+        # normalize
         img_array = img_array.astype("float32") / 255.0
 
-        # Flatten image for SVM
-        img_array = img_array.flatten().reshape(1, -1)
+        # flatten
+        img_array = img_array.flatten()
 
-        # Predict
+        # ============================================================
+        # FIX FEATURE SIZE
+        # ============================================================
+
+        if len(img_array) < 1164:
+
+            padding = 1164 - len(img_array)
+
+            img_array = np.pad(
+                img_array,
+                (0, padding)
+            )
+
+        # reshape
+        img_array = img_array.reshape(1, -1)
+
+        # predict
         prediction = model.predict(img_array)
 
-        # Show result
         st.success(
-            f"Prediction: {prediction[0]}"
+            f"Predicted Digit: {prediction[0]}"
         )
 
     except Exception as e:
 
-        st.error(
-            f"Prediction error: {e}"
-        )
+        st.error(f"Prediction error: {e}")
