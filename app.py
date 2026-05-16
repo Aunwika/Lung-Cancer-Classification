@@ -1,4 +1,3 @@
-
 import streamlit as st
 from PIL import Image
 import numpy as np
@@ -6,10 +5,24 @@ import joblib
 import os
 
 # ====================================================================
+# CLASS NAMES
+# ====================================================================
+
+CLASS_NAMES = [
+    'Normal cases',
+    'Benign cases',
+    'Malignant cases'
+]
+
+# ====================================================================
 # TITLE
 # ====================================================================
 
-st.title("MNIST Digit Predictor")
+st.title("Lung Cancer Classification")
+
+st.write(
+    "Upload a lung image for prediction"
+)
 
 # ====================================================================
 # LOAD MODEL
@@ -18,13 +31,16 @@ st.title("MNIST Digit Predictor")
 model_path = 'final_pipeline_lung_cancer.joblib'
 
 if not os.path.exists(model_path):
+
     st.error("Model file not found")
+
     st.stop()
 
+# load pipeline
 model = joblib.load(model_path)
 
 # ====================================================================
-# UPLOAD
+# FILE UPLOADER
 # ====================================================================
 
 uploaded_file = st.file_uploader(
@@ -33,12 +49,16 @@ uploaded_file = st.file_uploader(
 )
 
 # ====================================================================
-# PREDICT
+# PREDICTION
 # ====================================================================
 
 if uploaded_file is not None:
 
     try:
+
+        # ------------------------------------------------------------
+        # OPEN IMAGE
+        # ------------------------------------------------------------
 
         img = Image.open(uploaded_file)
 
@@ -48,13 +68,17 @@ if uploaded_file is not None:
             use_container_width=True
         )
 
+        # ------------------------------------------------------------
+        # PREPROCESS
+        # ------------------------------------------------------------
+
         # grayscale
         img = img.convert('L')
 
         # resize
         img = img.resize((28, 28))
 
-        # numpy
+        # convert to numpy
         img_array = np.array(img)
 
         # normalize
@@ -63,9 +87,9 @@ if uploaded_file is not None:
         # flatten
         img_array = img_array.flatten()
 
-        # ============================================================
+        # ------------------------------------------------------------
         # FIX FEATURE SIZE
-        # ============================================================
+        # ------------------------------------------------------------
 
         if len(img_array) < 1164:
 
@@ -79,13 +103,24 @@ if uploaded_file is not None:
         # reshape
         img_array = img_array.reshape(1, -1)
 
-        # predict
-        prediction = model.predict(img_array)
+        # ------------------------------------------------------------
+        # PREDICT
+        # ------------------------------------------------------------
+
+        prediction = model.predict(img_array)[0]
+
+        predicted_label = CLASS_NAMES[prediction]
+
+        # ------------------------------------------------------------
+        # SHOW RESULT
+        # ------------------------------------------------------------
 
         st.success(
-            f"Predicted Digit: {prediction[0]}"
+            f"Prediction Result: {predicted_label}"
         )
 
     except Exception as e:
 
-        st.error(f"Prediction error: {e}")
+        st.error(
+            f"Prediction error: {e}"
+        )
