@@ -1,4 +1,3 @@
-
 import streamlit as st
 from PIL import Image
 import numpy as np
@@ -31,7 +30,7 @@ CLASS_NAMES = data['class_names']
 FEATURE_SIZE = data['feature_size']
 
 # ====================================================================
-# UPLOAD
+# UPLOAD IMAGE
 # ====================================================================
 
 uploaded_file = st.file_uploader(
@@ -40,7 +39,7 @@ uploaded_file = st.file_uploader(
 )
 
 # ====================================================================
-# PREDICT
+# PREDICTION
 # ====================================================================
 
 if uploaded_file is not None:
@@ -60,20 +59,23 @@ if uploaded_file is not None:
         )
 
         # ============================================================
-        # PREPROCESS
+        # FEATURE EXTRACTION
         # ============================================================
 
-        img = img.convert('L')
+        # grayscale
+        gray = img.convert('L')
 
-        img = img.resize((34, 34))
+        # resize
+        gray = gray.resize((224, 224))
 
-        img_array = np.array(img)
+        # numpy
+        gray_np = np.array(gray)
 
         # normalize
-        img_array = img_array.astype("float32") / 255.0
+        gray_np = gray_np.astype("float32") / 255.0
 
         # flatten
-        img_array = img_array.flatten()
+        img_array = gray_np.flatten()
 
         # ============================================================
         # FIX FEATURE SIZE = 1164
@@ -95,6 +97,7 @@ if uploaded_file is not None:
         # reshape
         img_array = img_array.reshape(1, -1)
 
+        # show feature size
         st.write(f"Feature Shape: {img_array.shape}")
 
         # ============================================================
@@ -115,7 +118,10 @@ if uploaded_file is not None:
             f"Prediction Result: {class_name}"
         )
 
-        # probability
+        # ============================================================
+        # CONFIDENCE
+        # ============================================================
+
         if hasattr(model, "predict_proba"):
 
             prob = model.predict_proba(img_array)[0]
