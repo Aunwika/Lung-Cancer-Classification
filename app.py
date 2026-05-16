@@ -4,7 +4,6 @@ from PIL import Image
 import numpy as np
 import joblib
 import os
-import cv2
 
 # ====================================================================
 # TITLE
