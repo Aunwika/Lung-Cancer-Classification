@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 from PIL import Image
 import numpy as np
@@ -78,7 +76,8 @@ if uploaded_file is not None:
         img = img.convert('L')
 
         # resize
-        img = img.resize((28, 28))
+        # 34x34 = 1156 features
+        img = img.resize((34, 34))
 
         # convert to numpy
         img_array = np.array(img)
@@ -90,17 +89,24 @@ if uploaded_file is not None:
         img_array = img_array.flatten()
 
         # ------------------------------------------------------------
-        # FIX FEATURE SIZE
+        # FIX FEATURE SIZE TO 1164
         # ------------------------------------------------------------
 
-        if len(img_array) < 1164:
+        current_features = len(img_array)
 
-            padding = 1164 - len(img_array)
+        if current_features < 1164:
+
+            padding = 1164 - current_features
 
             img_array = np.pad(
                 img_array,
-                (0, padding)
+                (0, padding),
+                mode='constant'
             )
+
+        elif current_features > 1164:
+
+            img_array = img_array[:1164]
 
         # reshape
         img_array = img_array.reshape(1, -1)
@@ -111,6 +117,7 @@ if uploaded_file is not None:
 
         prediction = model.predict(img_array)[0]
 
+        # class name
         predicted_label = CLASS_NAMES[prediction]
 
         # ------------------------------------------------------------
